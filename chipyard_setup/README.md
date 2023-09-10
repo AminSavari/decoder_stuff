@@ -1,13 +1,18 @@
 Assuming you have conda installed on your machine, you have to install conda-lock by using the following commands (use bash shell): 
 
-`conda install -n base conda-lock=1.4`
-`conda activate base`
+```
+ conda install -n base conda-lock=1.4
+ conda activate base
+```
 
 when done, clone the chipyard repo (version 1.9.1):
 
-`git clone https://github.com/ucb-bar/chipyard.git`
-`cd chipyard`
-`git checkout 1.9.1`
+```
+ git clone https://github.com/ucb-bar/chipyard.git
+ cd chipyard
+ git checkout 1.9.1
+
+```
 
 Finally to build the necessary tools:
 
@@ -19,13 +24,13 @@ If you are in the conda base environment, source the env.sh in the top directory
 
 Now chipyard is ready to simulate your design.
 
-Prepare the your RTL and put your verilog code in in `generators/rocket-chip/src/main/resources/vsrc/`. 
+Prepare your RTL and put your verilog code in `generators/rocket-chip/src/main/resources/vsrc/`. 
 
-USE your "top" module and instanciated it in `RoccBlackBox.v`
+Use your "top" module and instanciate it in `RoccBlackBox.v`
 
 Connect the ports as necessary.
 
-Next, some scala config files need to be changed. The Config files that has to changed are as follows:
+Next, some scala config files need to be changed. The Config files that has to see or change are as follows:
 
 
 1. in `./generators/rocket-chip/src/main/scala/tile/LazyRoCC.scala` you can see the implementation of the BlackBoxExample
@@ -145,5 +150,4 @@ target_name.riscv : program_name.c syscalls.c crt.S
 </pre>
 
 all the files to binary generation are included in ./software directory of this repo.
-
 
