@@ -47,19 +47,43 @@ Now, Chipyard is ready to simulate your design.
 
 ### Integrating Your Verilog Design
 
-    Prepare your RTL (Register-Transfer Level) and place your Verilog code in generators/rocket-chip/src/main/resources/vsrc/.
+ Prepare your RTL (Register-Transfer Level) and place your Verilog code in generators/rocket-chip/src/main/resources/vsrc/.
 
-    Use your "top" module and instantiate it in RoccBlackBox.v.
+ Use your "top" module and instantiate it in RoccBlackBox.v.
 
-    Connect the ports as necessary.
+ Connect the ports as necessary.
 
 ### Configuration Changes
 
 In the Chipyard framework, some Scala configuration files need to be modified.
 
-    In `./generators/rocket-chip/src/main/scala/tile/LazyRoCC.scala`, you can see the implementation of the BlackBoxExample. Ensure that you have the necessary RoCC accelerator defined.
+ In `./generators/rocket-chip/src/main/scala/tile/LazyRoCC.scala`, you can see the implementation of the BlackBoxExample. Ensure that you have the necessary RoCC accelerator defined.
 
-    In `./generators/rocket-chip/src/main/scala/subsystem/Configs.scala`, modify the configuration class as follows:
+ In `./generators/rocket-chip/src/main/scala/subsystem/Configs.scala`, modify the configuration class from:
+
+```scala
+class WithRoccExample extends Config((site, here, up) => {
+  case BuildRoCC => List(
+    (p: Parameters) => {
+        val accumulator = LazyModule(new AccumulatorExample(OpcodeSet.custom0, n = 4)(p))
+        accumulator
+    },
+    (p: Parameters) => {
+        val translator = LazyModule(new TranslatorExample(OpcodeSet.custom1)(p))
+        translator
+    },
+    (p: Parameters) => {
+        val counter = LazyModule(new CharacterCountExample(OpcodeSet.custom2)(p))
+        counter
+    },
+    (p: Parameters) => {
+      val blackbox = LazyModule(new BlackBoxExample(OpcodeSet.custom3, "RoccBlackBox")(p))
+      blackbox
+    })
+})
+```
+
+To:
 
 ```scala
 
@@ -73,7 +97,9 @@ class WithRoccExample extends Config((site, here, up) => {
 ```
 This configuration defines the RoCC interface for your top design.
 
-    Finally, `in ./generators/chipyard/src/main/scala/config/RocketConfigs.scala`, add the following class:
+As you can notice the changes, we only need one accelerator to be connected to the rocket core which is the BlackBoxExample module defined in [1.]. So here we are building a RoCC interface which is capable of connecting 4 accelerators to each rocket core.
+
+ Finally, `in ./generators/chipyard/src/main/scala/config/RocketConfigs.scala`, add the following class:
 
 ```scala
 
@@ -98,6 +124,7 @@ This generates the Verilog for your design.
 make run-binary-debug CONFIG=RocketBlackBoxConfig BINARY=../../generators/rocket-chip/software/design.riscv USE_VPD=1
 ```
 This command runs the simulation with signal dump file generation.
+
 NOTE: each time you made changes to your design, you have to run the `make verilog CONFIG=...` command before running the command above. 
 
 NOTES: 
