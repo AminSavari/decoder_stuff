@@ -1,70 +1,68 @@
-Assuming you have conda installed on your machine, you have to install conda-lock by using the following commands (use bash shell): 
+# Chipyard Verilog Integration
 
+This guide provides instructions for integrating your Verilog design with the Chipyard framework.
+
+## Prerequisites
+
+Make sure you have the following prerequisites installed on your machine:
+
+- [Conda](https://docs.conda.io/en/latest/)
+- [Git](https://git-scm.com/)
+
+## Installation
+
+### Step 1: Install conda-lock
+
+Assuming you have conda installed on your machine, install conda-lock by running the following commands in a bash shell:
+
+```bash
+conda install -n base conda-lock=1.4
+conda activate base
 ```
- conda install -n base conda-lock=1.4
- conda activate base
+
+### Step 2: Clone Chipyard Repository
+
+Clone the Chipyard repository (version 1.9.1) using Git:
+
+```bash
+git clone https://github.com/ucb-bar/chipyard.git
+cd chipyard
+git checkout 1.9.1
 ```
+### Step 3: Build Necessary Tools
 
-when done, clone the chipyard repo (version 1.9.1):
+To build the necessary tools, run:
 
+```bash
+
+./build-setup.sh riscv-tools
 ```
- git clone https://github.com/ucb-bar/chipyard.git
- cd chipyard
- git checkout 1.9.1
+If you are in the conda base environment, source the env.sh file in the top directory of Chipyard to set up the necessary variables and paths:
 
+```bash
+
+source env.sh
 ```
+Now, Chipyard is ready to simulate your design.
 
-Finally to build the necessary tools:
+### Integrating Your Verilog Design
 
-`./build-setup.sh riscv-tools`
+    Prepare your RTL (Register-Transfer Level) and place your Verilog code in generators/rocket-chip/src/main/resources/vsrc/.
 
-If you are in the conda base environment, source the env.sh in the top directory of chipyard to set up the necessary varibles and paths.
+    Use your "top" module and instantiate it in RoccBlackBox.v.
 
-`source env.sh` 
+    Connect the ports as necessary.
 
-Now chipyard is ready to simulate your design.
+### Configuration Changes
 
-Prepare your RTL and put your verilog code in `generators/rocket-chip/src/main/resources/vsrc/`. 
+In the Chipyard framework, some Scala configuration files need to be modified.
 
-Use your "top" module and instanciate it in `RoccBlackBox.v`
+    In `./generators/rocket-chip/src/main/scala/tile/LazyRoCC.scala`, you can see the implementation of the BlackBoxExample. Ensure that you have the necessary RoCC accelerator defined.
 
-Connect the ports as necessary.
+    In `./generators/rocket-chip/src/main/scala/subsystem/Configs.scala`, modify the configuration class as follows:
 
-Next, some scala config files need to be changed. The Config files that has to see or change are as follows:
-
-
-1. in `./generators/rocket-chip/src/main/scala/tile/LazyRoCC.scala` you can see the implementation of the BlackBoxExample
-
-2. in `./generators/rocket-chip/src/main/scala/subsystem/Configs.scala` change the follwing class:
-
-<pre>
 ```scala
-class WithRoccExample extends Config((site, here, up) => {
-  case BuildRoCC => List(
-    (p: Parameters) => {
-        val accumulator = LazyModule(new AccumulatorExample(OpcodeSet.custom0, n = 4)(p))
-        accumulator
-    },
-    (p: Parameters) => {
-        val translator = LazyModule(new TranslatorExample(OpcodeSet.custom1)(p))
-        translator
-    },
-    (p: Parameters) => {
-        val counter = LazyModule(new CharacterCountExample(OpcodeSet.custom2)(p))
-        counter
-    },
-    (p: Parameters) => {
-      val blackbox = LazyModule(new BlackBoxExample(OpcodeSet.custom3, "RoccBlackBox")(p))
-      blackbox
-    })
-})
-```
-</pre>
 
-to:
-
-<pre>
-```scala
 class WithRoccExample extends Config((site, here, up) => {
   case BuildRoCC => List(
     (p: Parameters) => {
@@ -73,44 +71,46 @@ class WithRoccExample extends Config((site, here, up) => {
     })
 })
 ```
-</pre>
+This configuration defines the RoCC interface for your top design.
 
-As you can notice the changes, we only need one accelerator to be connected to the rocket core which is the BlackBoxExample module defined in [1.]. So here we are building a RoCC interface which is capable of connecting 4 accelerators to each rocket core.
+    Finally, `in ./generators/chipyard/src/main/scala/config/RocketConfigs.scala`, add the following class:
 
-
-3. Finally, in `./generators/chipyard/src/main/scala/config/RocketConfigs.scala` add the following class:
-
-<pre>
 ```scala
+
 class RocketBlackBoxConfig extends Config(                         
-  new freechips.rocketchip.subsystem.WithRoccExample() ++        // RoccExample is instanciated here 
-  new freechips.rocketchip.subsystem.WithNBigCores(1) ++         // single rocket-core
+  new freechips.rocketchip.subsystem.WithRoccExample() ++
+  new freechips.rocketchip.subsystem.WithNBigCores(1) ++
   new chipyard.config.AbstractConfig)
 ```
-</pre>
+This class adds the RoCC wrapper for your top design into the Chipyard framework.
+Simulation
 
-This class is to add the RoCC wrapper for our top design into the chipyard framework.
+Navigate to `./sims/vcs` (or `./sims/verilator` if you don't have access to Synopsys tools) and run the following commands in order:
 
+```bash
 
----
-Then go to `./sims/vcs` (or `./sims/verilator` if you don't have access to Synopsys tools), and run the following commands in order:
+make verilog CONFIG=RocketBlackBoxConfig
+```
+This generates the Verilog for your design.
 
-`make verilog CONFIG=RocketBlackBoxConfig`
+```bash
 
-This will generate the verilog for our design and all the other modules needed for the simulation (notice the CONFIG name is the same as class name define in [3.]
-`make run-binary-debug CONFIG=RocketBlackBoxConfig BINARY=../../generators/rocket-chip/software/design.riscv USE_VPD=1`
-
+make run-binary-debug CONFIG=RocketBlackBoxConfig BINARY=../../generators/rocket-chip/software/design.riscv USE_VPD=1
+```
+This command runs the simulation with signal dump file generation.
 NOTE: each time you made changes to your design, you have to run the `make verilog CONFIG=...` command before running the command above. 
 
 NOTES: 
-*if we only use the `run-binary` option no signal dump file will be generated (i.e. VCD or VPD files).
-*again use the same CONFIG name as the class name
-*to generate the binary for the RISCV core we have to write a C program filled with some ROCC_INSTRUCTIONS (The format and usage is defined in Rocc.h) and compiled for the RISCV target. To do this, I took two MakeFiles from Abel to compile the C program and generate the riscv binary file (i.e., .riscv file) for baremetal and OS-based development on RISCV architecture.
+* if we only use the `run-binary` option no signal dump file will be generated (i.e. VCD or VPD files).
+* use the same CONFIG name as the class name in `RocketConfigs.scala`
 
-Just run make in the same directory as your .c code. 
+### Generating RISC-V Binary
 
-### the Makefile for OS-Based RISCV 
-<pre>
+To generate the binary for the RISC-V core, create a C program with ROCC instructions (format and usage defined in Rocc.h) and compile it for the RISC-V target. Two MakeFiles are provided for both OS-based and baremetal RISC-V development.
+
+
+
+### Makefile for OS-Based RISC-V
 ```make
 SHELL = bash
 CC = riscv64-unknown-linux-gnu-gcc
@@ -127,13 +127,11 @@ $(TARGET): $(SOURCE)
 .PHONY: clean
 clean:
 	rm -f $(TARGET)
-
 ```
-</pre>
 
-### the Makefile for baremetal RISCV
+### Makefile for Baremetal RISC-V
 
-<pre>
+
 ```make
 RISCV_PREFIX ?= riscv64-unknown-elf-
 RISCV_GCC ?= $(RISCV_PREFIX)gcc
@@ -145,9 +143,8 @@ RISCV_SIM ?= spike --isa=rv$(XLEN)gc
 
 target_name.riscv : program_name.c syscalls.c crt.S
 	$(RISCV_GCC) $(RISCV_GCC_OPTS) -o $@ $^ $(RISCV_LINK_OPTS)
-
 ```
-</pre>
 
-all the files to binary generation are included in ./software directory of this repo.
+Make sure to replace program_name.c and target_name with your C program and desired binary name.
 
+With these steps, you should be able to integrate your Verilog design into the Chipyard framework and generate the necessary binaries for RISC-V.
