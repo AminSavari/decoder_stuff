@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="your_image_here.png" alt="Project Logo">
+  <img src="project_logo.png" alt="Project Logo">
 </p>
 
 # Using ARM Cores and FPGA on Xilinx Boards
@@ -10,21 +10,22 @@
 
 1. [Introduction](#introduction)
 2. [Advantages of Using ARM Cores](#advantages-of-using-arm-cores)
-3. [Considerations for Skipping ARM Cores](#considerations-for-skipping-arm-cores)
-4. [The Role of DRAM](#the-role-of-dram)
-5. [Getting Started](#getting-started)
-6. [Contributing](#contributing)
-7. [License](#license)
+3. [Using Petalinux on ARM-based Xilinx Boards](#using-petalinux-on-ARM-based-Xilinx-boards)
+4. [Considerations for Skipping ARM Cores](#considerations-for-skipping-arm-cores)
+5. [The Role of DRAM](#the-role-of-dram)
+6. [Getting Started](#getting-started)
+7. [Contributing](#contributing)
+8. [License](#license)
 
 ## Introduction
 
-Welcome to the comprehensive guide on leveraging ARM cores and FPGA (Field-Programmable Gate Array) resources on Xilinx boards for embedded system development. This guide provides insights into the strategic use of ARM cores alongside FPGA resources to maximize the potential of your Xilinx-based projects.
+Things I've learned from Abel, AMD docs and Zhongpan...
 
 ---
 
 ## Advantages of Using ARM Cores
 
-Harness the power of ARM cores on your Xilinx board to unlock the following advantages:
+Harness the power of ARM cores on your Xilinx board to unlock several advantages:
 
 ### 1. Heterogeneous Processing
 
@@ -60,6 +61,62 @@ Take advantage of advanced debugging and profiling tools supported by ARM cores.
 
 ---
 
+## Using Petalinux on ARM-based Xilinx Boards
+
+Using Petalinux on an ARM-based Xilinx board, such as one from the Zynq or UltraScale+ families, offers several advantages when developing embedded systems and applications:
+
+### Key Advantages
+
+### 1. Customizable Linux Distribution
+
+Petalinux enables you to build a customized, minimal Linux distribution tailored to your specific project requirements. You can include only the components and drivers you need, reducing the footprint and improving boot times.
+
+### 2. Heterogeneous Processing
+
+Many Xilinx boards feature ARM cores alongside FPGA fabric. Petalinux provides a unified platform for managing both the ARM cores and FPGA, making it easier to design systems that leverage both hardware and software resources.
+
+### 3. Board Support Packages (BSPs)
+
+Xilinx provides BSPs for their boards, which are used by Petalinux to simplify hardware configuration. This means you don't need to start from scratch when setting up hardware interfaces, peripherals, and memory mapping for your specific Xilinx board.
+
+### 4. Kernel and Drivers
+
+Petalinux includes a Linux kernel with drivers optimized for Xilinx hardware. You can easily configure and add custom drivers if needed.
+
+### 5. Device Tree Generation
+
+Petalinux generates device tree files (DTBs) that describe the hardware configuration of your Xilinx board. These DTBs are crucial for Linux to understand and interact with the hardware. Petalinux streamlines the generation process.
+
+### 6. Cross-Compilation Toolchain
+
+Petalinux provides a preconfigured cross-compilation toolchain, making it easy to compile software for the ARM cores on the Xilinx board.
+
+### 7. U-Boot Support
+
+Petalinux integrates U-Boot bootloader, enabling you to configure boot options and update the boot image.
+
+### 8. Yocto Integration
+
+Petalinux is based on Yocto Project, a widely-used framework for building custom Linux distributions. This integration offers flexibility and extensibility for creating custom images.
+
+### 9. Community and Vendor Support
+
+Xilinx and the embedded Linux community offer ample resources, tutorials, forums, and documentation to support Petalinux users.
+
+### 10. SDK Integration
+
+Petalinux integrates with the Xilinx Software Development Kit (SDK), simplifying the development of software applications that run on the ARM cores alongside Linux.
+
+### 11. Security
+
+Petalinux supports security features such as secure boot and Trusted Platform Module (TPM) integration, enhancing the security of your embedded system.
+
+### 12. Profiling and Debugging
+
+You can use standard Linux tools for profiling, debugging, and performance analysis on your ARM-based applications.
+
+---
+
 ## Considerations for Skipping ARM Cores
 
 While ARM cores offer numerous benefits, there are scenarios where you might consider skipping them:
@@ -80,7 +137,7 @@ If real-time control is not a project requirement, and the FPGA fabric can handl
 
 ## The Role of DRAM
 
-The role of DRAM is vital in your decision-making process. It's not the sole determinant, but it does influence the decision:
+The role of DRAM is vital in your decision-making process. It influences the decision in the following ways:
 
 ### - Memory Management
 
